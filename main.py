@@ -43,11 +43,6 @@ api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
 async def get_api_key(api_key: str = Security(api_key_header)):
     expected = os.getenv("APP_API_KEY")
     # If no API key is provided or it doesn't match, raise an HTTP 401 error
-    if expected is None:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Server misconfigured: APP_API_KEY not set"
-        )
     if api_key == expected:
         return api_key
     raise HTTPException(

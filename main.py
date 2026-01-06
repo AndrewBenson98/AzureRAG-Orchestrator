@@ -6,6 +6,8 @@ from azure.core.credentials import AzureKeyCredential
 from urllib.parse import urlparse
 from azure.core.exceptions import HttpResponseError
 from openai import AzureOpenAI
+from fastapi import Depends, HTTPException, Security, status
+from fastapi.security.api_key import APIKeyHeader
 
 # Load environment variables from a .env file into process environment
 load_dotenv()
@@ -32,10 +34,33 @@ ai_client = AzureOpenAI(
 )
 
 # -----------------------------
+# Security
+# -----------------------------
+API_KEY_NAME = "api_key"
+api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
+
+# Dependency to check for API key in request headers
+async def get_api_key(api_key: str = Security(api_key_header)):
+    expected = os.getenv("APP_API_KEY")
+    # If no API key is provided or it doesn't match, raise an HTTP 401 error
+    if expected is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Server misconfigured: APP_API_KEY not set"
+        )
+    if api_key == expected:
+        return api_key
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Unauthorized",
+        headers={"WWW-Authenticate": "API Key"}
+    )
+
+# -----------------------------
 # Endpoints
 # ----------------------------- 
 # Define a GET endpoint at /ask that takes a question as a query parameter
-@app.get("/ask")
+@app.get("/ask", dependencies=[Depends(get_api_key)])
 async def ask_question(question: str):
     """
     Endpoint: GET /ask?question=...

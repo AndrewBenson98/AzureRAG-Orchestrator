@@ -8,13 +8,13 @@ from azure.core.exceptions import HttpResponseError
 from openai import AzureOpenAI
 from fastapi import Depends, HTTPException, Security, status
 from fastapi.security.api_key import APIKeyHeader
-
+from fastapi.middleware.cors import CORSMiddleware
 # Load environment variables from a .env file into process environment
 load_dotenv()
 
 # Create the FastAPI application instance that will serve HTTP requests
 app = FastAPI()
-
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 # -----------------------------
 # Clients
 # -----------------------------
